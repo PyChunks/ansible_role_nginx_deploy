@@ -1,0 +1,53 @@
+---
+
+  - name: Get variables file
+    include_vars: variables.yml
+
+  - name: Install Nginx
+    ansible.builtin.package:
+     name: nginx
+     state: present
+
+  - name: Install rsync
+    ansible.builtin.package:
+     name: rsync
+     state: present
+  
+  - name: Ensure Nginx service is enabled 
+    ansible.builtin.service:
+      name: nginx
+      enabled: yes
+      state: started
+
+  - name: Create www directory
+    ansible.builtin.file:
+      path: "/var/www/{{ domain }}"
+      state: directory
+      group: www-data
+      mode: '0775'
+
+  - name: Remove default site
+    ansible.builtin.file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+    notify: restart nginx
+
+  - name: copy nginx site.conf
+    ansible.builtin.template:
+      src: site.conf.j2
+      dest: "/etc/nginx/sites-enabled/{{ domain }}.conf"
+      owner: root
+      group: root
+      mode: '0644'
+    notify: restart nginx
+
+  - name: "sync website"
+    ansible.posix.synchronize:
+      src: site/
+      dest: "/var/www/{{ domain }}"
+      archive: no
+      checksum: yes
+      recursive: yes
+      delete: yes
+    become: no
+
