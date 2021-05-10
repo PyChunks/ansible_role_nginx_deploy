@@ -1,8 +1,4 @@
 ---
-
-  - name: Get variables file
-    include_vars: variables.yml
-
   - name: Install Nginx
     ansible.builtin.package:
      name: nginx
@@ -13,7 +9,7 @@
      name: rsync
      state: present
   
-  - name: Ensure Nginx service is enabled 
+  - name: Ensure Nginx service is started and enabled at boot 
     ansible.builtin.service:
       name: nginx
       enabled: yes
@@ -26,13 +22,13 @@
       group: www-data
       mode: '0775'
 
-  - name: Remove default site
+  - name: Remove default Nginx site
     ansible.builtin.file:
       path: /etc/nginx/sites-enabled/default
       state: absent
     notify: restart nginx
 
-  - name: copy nginx site.conf
+  - name: copy site configuration
     ansible.builtin.template:
       src: site.conf.j2
       dest: "/etc/nginx/sites-enabled/{{ domain }}.conf"
